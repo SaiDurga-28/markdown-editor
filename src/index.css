@@ -1,0 +1,87 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.dark {
+  background: #0f172a;
+  color: white;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: #1e293b;
+  color: white;
+  padding: 10px;
+}
+
+.sidebar div {
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.sidebar div:hover {
+  background: #334155;
+}
+
+.sidebar button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+}
+
+/* Main area */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toolbar */
+.toolbar {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.toolbar button {
+  margin-right: 8px;
+}
+
+/* Editor + Preview */
+.content {
+  flex: 1;
+  display: flex;
+}
+
+textarea {
+  width: 50%;
+  padding: 12px;
+  border: none;
+  outline: none;
+  resize: none;
+}
+
+.preview {
+  width: 50%;
+  padding: 12px;
+  border-left: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+/* Status bar */
+.status {
+  padding: 6px 12px;
+  border-top: 1px solid #ddd;
+  font-size: 14px;
+}

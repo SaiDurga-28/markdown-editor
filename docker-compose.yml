@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4001:4173"
+    healthcheck:
+      test: ["CMD","curl","-f","http://localhost:4173"]
+      interval: 10s
+      retries: 5
