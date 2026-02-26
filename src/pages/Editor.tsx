@@ -10,28 +10,51 @@ export default function Editor() {
   const {
     files,
     updateFileContent,
+    createFile,
     toggleTheme,
-    theme
+    theme,
   } = useStore();
 
-  const file = files[fileId!];
+  // Redirect if no fileId
+  useEffect(() => {
+    if (!fileId) {
+      navigate("/editor/welcome.md");
+    }
+  }, [fileId, navigate]);
+
+  const file = fileId ? files[fileId] : undefined;
+
+  // Redirect if file does not exist
+  useEffect(() => {
+    if (fileId && !file) {
+      navigate("/editor/welcome.md");
+    }
+  }, [fileId, file, navigate]);
+
   const [value, setValue] = useState(file?.content || "");
   const timer = useRef<number | undefined>(undefined);
 
-  // Debounced autosave
-  useEffect(() => {
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => {
-      updateFileContent(fileId!, value);
-    }, 500);
-  }, [value]);
-
   // Update editor when switching files
   useEffect(() => {
-    if (file) setValue(file.content);
-  }, [fileId]);
+    if (file) {
+      setValue(file.content);
+    }
+  }, [file]);
 
-  // Theme toggle
+  // Debounced autosave
+  useEffect(() => {
+    if (!fileId) return;
+
+    window.clearTimeout(timer.current);
+
+    timer.current = window.setTimeout(() => {
+      updateFileContent(fileId, value);
+    }, 500);
+
+    return () => window.clearTimeout(timer.current);
+  }, [value, fileId, updateFileContent]);
+
+  // Theme toggle effect
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
@@ -43,6 +66,8 @@ export default function Editor() {
       '[data-testid="markdown-editor"]'
     ) as HTMLTextAreaElement;
 
+    if (!textarea) return;
+
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
 
@@ -50,70 +75,85 @@ export default function Editor() {
       value.slice(start, end) ||
       (chars === "**" ? "bold text" : "italic text");
 
-    setValue(
+    const newText =
       value.slice(0, start) +
-        chars +
-        selected +
-        chars +
-        value.slice(end)
-    );
+      chars +
+      selected +
+      chars +
+      value.slice(end);
+
+    setValue(newText);
   }
 
   return (
-  <div data-testid="editor-layout" className="app">
+    <div data-testid="editor-layout" className="app">
+      {/* Sidebar */}
+      <div data-testid="file-browser" className="sidebar">
+        {Object.values(files).map((f) => (
+          <div
+            key={f.id}
+            data-testid={`file-item-${f.id}`}
+            onClick={() => navigate(`/editor/${f.id}`)}
+          >
+            {f.name}
+          </div>
+        ))}
 
-    <div data-testid="file-browser" className="sidebar">
-      {Object.values(files).map((f) => (
-        <div
-          key={f.id}
-          data-testid={`file-item-${f.id}`}
-          onClick={() => navigate(`/editor/${f.id}`)}
+        <button
+          data-testid="create-file-button"
+          onClick={() => {
+            createFile();
+            navigate("/editor/untitled.md");
+          }}
         >
-          {f.name}
+          New File
+        </button>
+      </div>
+
+      {/* Main */}
+      <div className="main">
+        {/* Toolbar */}
+        <div className="toolbar">
+          <button
+            data-testid="toolbar-bold-button"
+            onClick={() => wrap("**")}
+          >
+            Bold
+          </button>
+
+          <button
+            data-testid="toolbar-italic-button"
+            onClick={() => wrap("*")}
+          >
+            Italic
+          </button>
+
+          <button
+            data-testid="theme-toggle-button"
+            onClick={toggleTheme}
+          >
+            Theme
+          </button>
         </div>
-      ))}
 
-      <button
-  data-testid="create-file-button"
-  onClick={() => navigate("/editor/untitled.md")}
->
-  New File
-</button>
-    </div>
+        {/* Editor + Preview */}
+        <div className="content">
+          <textarea
+            data-testid="markdown-editor"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
 
-    <div className="main">
+          <div data-testid="markdown-preview" className="preview">
+            <ReactMarkdown>{value}</ReactMarkdown>
+          </div>
+        </div>
 
-      <div className="toolbar">
-        <button data-testid="toolbar-bold-button" onClick={() => wrap("**")}>
-          Bold
-        </button>
-
-        <button data-testid="toolbar-italic-button" onClick={() => wrap("*")}>
-          Italic
-        </button>
-
-        <button data-testid="theme-toggle-button" onClick={toggleTheme}>
-          Theme
-        </button>
-      </div>
-
-      <div className="content">
-        <textarea
-          data-testid="markdown-editor"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-        />
-
-        <div data-testid="markdown-preview" className="preview">
-          <ReactMarkdown>{value}</ReactMarkdown>
+        {/* Status Bar */}
+        <div data-testid="word-count-display" className="status">
+          Words: {words}
         </div>
       </div>
-
-      <div data-testid="word-count-display" className="status">
-        Words: {words}
-      </div>
-
     </div>
-  </div>
-);
+  );
 }
